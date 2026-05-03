@@ -1,38 +1,48 @@
-# Autonomous Exploration Robot (ROS 2)
+# ROS2 Autonomous Robot Navigation (Gazebo)
 
 ## Overview
-This project implements an autonomous agent using ROS 2 that explores a 2D environment and avoids boundaries using feedback control and state-based behavior.
+This project implements an autonomous mobile robot using ROS2 and Gazebo simulation.
 
-## Features
-- ROS 2 Python node (rclpy)
-- Autonomous exploration with random motion
-- Wall avoidance using position feedback
-- Smooth motion control (no jitter)
-- State-based behavior:
-  - Explore mode
-  - Avoid mode
+The robot:
+- Navigates autonomously
+- Avoids boundaries
+- Uses odometry feedback for control
+- Applies heading-based steering logic
 
-## Architecture
+## Tech Stack
+- ROS2 (Jazzy)
+- Gazebo (Ignition)
+- Python (rclpy)
 
-Sense → Think → Act loop:
-
-- Sense: `/turtle1/pose`
-- Think: decision logic (explore vs avoid)
-- Act: `/turtle1/cmd_vel`
-
-## Behavior
-
-### Explore Mode
-- Moves forward
-- Applies small random turning
-
-### Avoid Mode
-- Detects boundary proximity
-- Rotates toward safe direction
-- Moves away from wall
+## eatures
+- Publisher: `/model/vehicle/cmd_vel`
+- Subscriber: `/model/vehicle/odometry`
+- Smooth motion using yaw-based control
+- Boundary-aware navigation
 
 ## How to Run
 
 ```bash
-ros2 run turtlesim turtlesim_node
+cd ~/ros2_ws
+colcon build
+source install/setup.bash
+
+# Launch Gazebo
+ros2 launch ros_gz_sim gz_sim.launch.py
+
+# Spawn robot
+ros2 run ros_gz_sim create -world empty \
+-file /opt/ros/jazzy/share/ros_gz_sim_demos/models/vehicle/model.sdf
+
+# Enable robot
+gz topic -t /model/vehicle/enable -m gz.msgs.Boolean -p "data: true"
+
+# Bridge topics
+ros2 run ros_gz_bridge parameter_bridge \
+/model/vehicle/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist
+
+ros2 run ros_gz_bridge parameter_bridge \
+/model/vehicle/odometry@nav_msgs/msg/Odometry@gz.msgs.Odometry
+
+# Run controller
 ros2 run my_robot_controller simple_node
